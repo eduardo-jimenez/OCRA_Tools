@@ -168,6 +168,9 @@ def ScrapeRaceResults(driver, url: str, elite_points, raceTitle: str, category: 
 
 
 def ScrapeCrono4SportFullRace(driver, url: str, elite_points, eventName: str, excelFilePath: str):
+
+    print("Scraping results from crono4sports webpage")
+
     # Create an Excel file
     workbook = Workbook()
     origWorksheet = workbook.active
