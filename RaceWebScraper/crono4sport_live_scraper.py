@@ -15,9 +15,9 @@ import os
 
 
 # This function scrapes an event at the given division for the given sex
-def ScrapeRaceResults(driver, url: str, elite_points, raceTitle: str, category: str, sex: str) -> list:
+def ScrapeRaceLiveResults(driver, url: str, elite_points, raceTitle: str, category: str, sex: str) -> list:
 
-    print("Scraping Race results from crono4sport.es for ", raceTitle, " - ", category, " - ", sex, ": ", url)
+    print("Scraping Live Race results from crono4sport.es for ", raceTitle, " - ", category, " - ", sex, ": ", url)
 
     category_index = 0
     match category:
@@ -25,29 +25,42 @@ def ScrapeRaceResults(driver, url: str, elite_points, raceTitle: str, category: 
             category_index = 0
         case "GGEE":
             category_index = 1
-    sex_value = "General"
+    sex_index = 0
     match sex:
         case "Masc":
-            sex_value = "GeneralMasc"
+            sex_index = 1
         case "Fem":
-            sex_value = "GeneralFem"
+            sex_index = 2
     
     driver.get(url)
     time.sleep(0.25)
 
+    # select the results
+    results_elem = driver.find_element(by=By.ID, value='mn_res')
+    results_elem.click()
+
     # pick the category
-    category_selector_item = driver.find_element(by=By.NAME, value="Carrera")
-    #category_items = category_selector_item.find_elements(by=By.TAG_NAME, value="option")
-    #selected_category_list_item = category_items[category_index]
-    #selected_category_list_item.click()
-    category_selector = Select(category_selector_item)
-    category_selector.select_by_index(category_index)
+    menu_category_div = driver.find_element(by=By.ID, value="lbresCourse")
+    menu_category_div.click()
+    time.sleep(0.25)
+
+    category_div_elem = driver.find_element(by=By.ID, value='smCourse')
+    category_list = category_div_elem.find_element(by=By.CLASS_NAME, value='ssmnu')
+    category_list_items = category_list.find_elements(by=By.TAG_NAME, value='li')
+    selected_category_list_item = category_list_items[category_index]
+    selected_category_list_item.click()
     time.sleep(0.25)
 
     # and the sex
-    selector_sex_item = driver.find_element(by=By.NAME, value="Categoria")
-    selector_sex = Select(selector_sex_item)
-    selector_sex.select_by_value(sex_value)
+    menu_sex_item = driver.find_element(by=By.ID, value="mnuSx")
+    menu_sex_item.click()
+    time.sleep(0.25)
+
+    sex_selector_item = driver.find_element(by=By.ID, value="smSx")
+    sex_selector_list = sex_selector_item.find_element(by=By.CLASS_NAME, value='ssmnu')
+    sex_selector_items = sex_selector_list.find_elements(by=By.TAG_NAME, value='li')
+    sex_selector_item = sex_selector_items[sex_index]
+    sex_selector_item.click()
     time.sleep(0.25)
 
     # now we should iterate over all the links to athletes
@@ -56,7 +69,7 @@ def ScrapeRaceResults(driver, url: str, elite_points, raceTitle: str, category: 
 
     # scroll down to the end of the table
     html = driver.find_element(By.TAG_NAME, 'html')
-    table_athletes_item = driver.find_element(by=By.ID, value="inscritos")
+    table_athletes_item = driver.find_element(by=By.ID, value="tabres")
     table_athletes_body_item = table_athletes_item.find_element(by=By.TAG_NAME, value="tbody")
     athletes_table_items = table_athletes_body_item.find_elements(by=By.TAG_NAME, value="tr")
     numAthletes = len(athletes_table_items)
@@ -66,7 +79,7 @@ def ScrapeRaceResults(driver, url: str, elite_points, raceTitle: str, category: 
         html.send_keys(Keys.END)
         time.sleep(0.5)
 
-        table_athletes_item = driver.find_element(by=By.ID, value="inscritos")
+        table_athletes_item = driver.find_element(by=By.ID, value="tabres")
         table_athletes_body_item = table_athletes_item.find_element(by=By.TAG_NAME, value="tbody")
         athletes_table_items = table_athletes_body_item.find_elements(by=By.TAG_NAME, value="tr")
         newNumAthletes = len(athletes_table_items)
@@ -76,7 +89,7 @@ def ScrapeRaceResults(driver, url: str, elite_points, raceTitle: str, category: 
         else:
             numAthletes = newNumAthletes
 
-    table_athletes_item = driver.find_element(by=By.ID, value="inscritos")
+    table_athletes_item = driver.find_element(by=By.ID, value="tabres")
     table_athletes_body_item = table_athletes_item.find_element(by=By.TAG_NAME, value="tbody")
     athletes_table_items = table_athletes_body_item.find_elements(by=By.TAG_NAME, value="tr")
     print("Analyzing " + str(len(athletes_table_items)) + " athlete rows")
@@ -89,11 +102,11 @@ def ScrapeRaceResults(driver, url: str, elite_points, raceTitle: str, category: 
         # the second is the number and the third the name
         number = athlete_parts[1].text
         athleteName = athlete_parts[2].text
-        athleteCat = athlete_parts[3].text
+        clubName = athlete_parts[3].text
         # the seventh is the category position and the ninth the time
-        categoryPos = athlete_parts[4].text
-        clubName = athlete_parts[5].text
-        timeStr = athlete_parts[7].text
+        athleteCat = athlete_parts[5].text
+        categoryPos = athlete_parts[6].text
+        timeStr = athlete_parts[8].text
 
         if debugCounter % 10 == 0:
             print(pos + " " + number + " - " + athleteName + "( " + clubName + " ). Finished " + categoryPos + " in " + athleteCat + " with a time of " + timeStr)
@@ -154,9 +167,9 @@ def ScrapeRaceResults(driver, url: str, elite_points, raceTitle: str, category: 
     return athletes
 
 
-def ScrapeCrono4SportFullRace(driver, url: str, elite_points, eventName: str, excelFilePath: str):
+def ScrapeLiveCrono4SportFullRace(driver, url: str, elite_points, eventName: str, excelFilePath: str):
 
-    print("Scraping results from crono4sports webpage")
+    print("Scraping live results from crono4sports webpage")
 
     # Create an Excel file
     workbook = Workbook()
@@ -170,22 +183,22 @@ def ScrapeCrono4SportFullRace(driver, url: str, elite_points, eventName: str, ex
     # copy_cells(reference_sheet, worksheet)
 
     # Elite Men
-    athletes = ScrapeRaceResults(driver, url, elite_points, eventName, 'Elite', 'Masc')
+    athletes = ScrapeRaceLiveResults(driver, url, elite_points, eventName, 'Elite', 'Masc')
     worksheet = workbook.create_sheet("Elite_Masc")
     fillExcelWorksheet(worksheet, athletes)
 
     # Elite Women
-    athletes = ScrapeRaceResults(driver, url, elite_points, eventName, 'Elite', 'Fem')
+    athletes = ScrapeRaceLiveResults(driver, url, elite_points, eventName, 'Elite', 'Fem')
     worksheet = workbook.create_sheet("Elite_Fem")
     fillExcelWorksheet(worksheet, athletes)
 
     # AG Men
-    athletes = ScrapeRaceResults(driver, url, elite_points, eventName, 'GGEE', 'Masc')
+    athletes = ScrapeRaceLiveResults(driver, url, elite_points, eventName, 'GGEE', 'Masc')
     worksheet = workbook.create_sheet("GGEE_Masc")
     fillExcelWorksheet(worksheet, athletes)
 
     # AG Women
-    athletes = ScrapeRaceResults(driver, url, elite_points, eventName, 'GGEE', 'Fem')
+    athletes = ScrapeRaceLiveResults(driver, url, elite_points, eventName, 'GGEE', 'Fem')
     worksheet = workbook.create_sheet("GGEE_Fem")
     fillExcelWorksheet(worksheet, athletes)
 
