@@ -1,5 +1,4 @@
-from athlete_data import AthleteData
-from athlete_data import fillExcelWorksheet
+from athlete_data import AthleteData, fillExcelWorksheet
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -41,18 +40,18 @@ isOCRSeries = False
 #url = 'https://www.dorsalchip.es/carrera/2024/2/18/SKULL_RACE.aspx'
 #raceFullName = 'Skull Race - Torremolinos - 2024'
 #raceNum = 3
-#url = 'https://www.dorsalchip.es/carrera/2024/2/25/VI_The_Last_Race_.aspx#'
-#raceFullName = 'The Last Race - Canillas de Aceituno - 2024'
-#raceNum = 4
+url = 'https://www.dorsalchip.es/carrera/2024/2/25/VI_The_Last_Race_.aspx#'
+raceFullName = 'The Last Race - Canillas de Aceituno - 2024'
+raceNum = 4
 #url = 'https://www.crono4sports.es/clasificacion/1733/'
 #raceFullName = 'Lion Race - Navas del Rey - 2024'
 #raceNum = 5
 #url = 'https://www.crono4sports.es/glive/g-live.html?f=/carreras/1699-llocnou.clax'
 #raceFullName = 'Medieval Xtreme Race - Llocnou de San Jeromi - 2024'
 #raceNum = 6
-url = 'https://www.crono4sports.es/glive/g-live.html?f=/carreras/1684-kongrace.clax'
-raceFullName = 'Kong Race - Polinya - 2024'
-raceNum = 7
+#url = 'https://www.crono4sports.es/glive/g-live.html?f=/carreras/1684-kongrace.clax'
+#raceFullName = 'Kong Race - Polinya - 2024'
+#raceNum = 7
 
 # generate the file
 currFolder = os.getcwd()
