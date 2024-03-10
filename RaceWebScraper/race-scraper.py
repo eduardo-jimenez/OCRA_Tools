@@ -10,6 +10,7 @@ from scraper_common import buildElitePointsArray
 from crono4sport_live_scraper import ScrapeLiveCrono4SportFullRace
 from crono4sport_scraper import ScrapeCrono4SportFullRace
 from dorsalchip_scraper import ScrapeDorsalChipFullRace
+from toptime_scraper import ScrapeToptimeFullRace
 import requests
 import time
 import os
@@ -24,12 +25,17 @@ def scrapeFullRace(driver, url: str, elite_points, eventName: str, excelFilePath
         ScrapeCrono4SportFullRace(driver, url, elite_points, eventName, excelFilePath)
     elif 'dorsalchip.es' in url:
         ScrapeDorsalChipFullRace(driver, url, elite_points, eventName, excelFilePath)
+    elif 'toptime' in url:
+        ScrapeToptimeFullRace(driver, url, elite_points, eventName, excelFilePath)
     else:
         print("Error!!! Unknown page to scrape: " + url)
 
 
 #  configure the scraping 
 isOCRSeries = False
+#url = 'https://toptime.live/resultados/electra-race-2024/'
+#raceFullName = 'Electra Race - La Majadilla - 2024'
+#raceNum = 1
 #url = 'https://www.crono4sports.es/clasificacion/1664/'
 #raceFullName = 'Medieval Xtreme Race - Polop - 2024'
 #raceNum = 2
@@ -40,18 +46,19 @@ isOCRSeries = False
 #url = 'https://www.dorsalchip.es/carrera/2024/2/18/SKULL_RACE.aspx'
 #raceFullName = 'Skull Race - Torremolinos - 2024'
 #raceNum = 3
-url = 'https://www.dorsalchip.es/carrera/2024/2/25/VI_The_Last_Race_.aspx#'
-raceFullName = 'The Last Race - Canillas de Aceituno - 2024'
-raceNum = 4
+# NO VALE!
+#url = 'https://www.dorsalchip.es/carrera/2024/2/25/VI_The_Last_Race_.aspx#'
+#raceFullName = 'The Last Race - Canillas de Aceituno - 2024'
+#raceNum = 4
 #url = 'https://www.crono4sports.es/clasificacion/1733/'
 #raceFullName = 'Lion Race - Navas del Rey - 2024'
 #raceNum = 5
 #url = 'https://www.crono4sports.es/glive/g-live.html?f=/carreras/1699-llocnou.clax'
 #raceFullName = 'Medieval Xtreme Race - Llocnou de San Jeromi - 2024'
 #raceNum = 6
-#url = 'https://www.crono4sports.es/glive/g-live.html?f=/carreras/1684-kongrace.clax'
-#raceFullName = 'Kong Race - Polinya - 2024'
-#raceNum = 7
+url = 'https://www.crono4sports.es/glive/g-live.html?f=/carreras/1684-kongrace.clax'
+raceFullName = 'Kong Race - Polinya - 2024'
+raceNum = 7
 
 # generate the file
 currFolder = os.getcwd()

@@ -15,97 +15,88 @@ import os
 
 
 # This function scrapes an event at the given division for the given sex
-def ScrapeRaceResults(driver, url: str, elite_points, raceTitle: str, category: str, sex: str) -> list:
+def ScrapeRaceResults(driver: webdriver.Chrome, url: str, elite_points: list, raceTitle: str, category: str, sex: str) -> list:
 
     print("Scraping Race results from crono4sport.es for ", raceTitle, " - ", category, " - ", sex, ": ", url)
 
-    category_index = 0
-    match category:
-        case "Elite":
-            category_index = 0
-        case "GGEE":
-            category_index = 1
-    sex_value = "General"
+    is_elite = 'elite' in category.lower()
+    sex_elem_id = "mnuHF"
     match sex:
         case "Masc":
-            sex_value = "GeneralMasc"
+            sex_elem_id = "mnuHom"
         case "Fem":
-            sex_value = "GeneralFem"
+            sex_elem_id = "mnuFem"
     
     driver.get(url)
+    time.sleep(0.5)
+
+    iframe_item = driver.find_element(by=By.ID, value='FGL')
+    new_url = iframe_item.get_attribute('src')
+    driver.get(new_url)
+    time.sleep(1.0)
+
+    # select the sex
+    sex_elem = driver.find_element(by=By.ID, value='mnuSx')
+    sex_elem.click()
+    time.sleep(0.25)
+    meta_elem = sex_elem.find_element(by=By.ID, value=sex_elem_id)
+    meta_elem.click()
     time.sleep(0.25)
 
-    # pick the category
-    category_selector_item = driver.find_element(by=By.NAME, value="Carrera")
-    #category_items = category_selector_item.find_elements(by=By.TAG_NAME, value="option")
-    #selected_category_list_item = category_items[category_index]
-    #selected_category_list_item.click()
-    category_selector = Select(category_selector_item)
-    category_selector.select_by_index(category_index)
-    time.sleep(0.25)
-
-    # and the sex
-    selector_sex_item = driver.find_element(by=By.NAME, value="Categoria")
-    selector_sex = Select(selector_sex_item)
-    selector_sex.select_by_value(sex_value)
-    time.sleep(0.25)
-
-    # now we should iterate over all the links to athletes
-    debugCounter = 0
+    # start scraping athlete results
     athletes = []
 
-    # scroll down to the end of the table
-    html = driver.find_element(By.TAG_NAME, 'html')
-    table_athletes_item = driver.find_element(by=By.ID, value="inscritos")
-    table_athletes_body_item = table_athletes_item.find_element(by=By.TAG_NAME, value="tbody")
-    athletes_table_items = table_athletes_body_item.find_elements(by=By.TAG_NAME, value="tr")
-    numAthletes = len(athletes_table_items)
-    for i in range(5):
-        table_head_item = table_athletes_item.find_element(by=By.TAG_NAME, value="thead")
-        table_head_item.click()
-        html.send_keys(Keys.END)
-        time.sleep(0.5)
-
-        table_athletes_item = driver.find_element(by=By.ID, value="inscritos")
-        table_athletes_body_item = table_athletes_item.find_element(by=By.TAG_NAME, value="tbody")
-        athletes_table_items = table_athletes_body_item.find_elements(by=By.TAG_NAME, value="tr")
-        newNumAthletes = len(athletes_table_items)
-        if numAthletes >= newNumAthletes:
-            print("Found the end of the page after scrolling " + str(i + 1) + " times")
-            break
-        else:
-            numAthletes = newNumAthletes
-
-    table_athletes_item = driver.find_element(by=By.ID, value="inscritos")
+    # scrape the athlete results from this page
+    table_athletes_item = driver.find_element(by=By.ID, value="tabres")
     table_athletes_body_item = table_athletes_item.find_element(by=By.TAG_NAME, value="tbody")
     athletes_table_items = table_athletes_body_item.find_elements(by=By.TAG_NAME, value="tr")
     print("Analyzing " + str(len(athletes_table_items)) + " athlete rows")
 
-    for athlete_root_item in athletes_table_items:
-        athlete_parts = athlete_root_item.find_elements(by=By.TAG_NAME, value="td")
+    for athlete_table_item in athletes_table_items:
+        # get all the parts of the row
+        athlete_parts = athlete_table_item.find_elements(by=By.TAG_NAME, value="td")
 
-        # the first item is the position
+        # there should be at least 12 parts (usually 14)
+        if len(athlete_parts) < 12:
+            continue
+
+        # first let's check this is an OCRA competitor
+        is_ocra_str = athlete_parts[7].text
+        if (is_ocra_str != 'SI'):
+            continue
+        number = athlete_parts[8].text
+        if (number == ""):
+            continue
+
+        # now check if it elite/GGEE
+        athleteCat = athlete_parts[5].text
+        if is_elite and not ('Elite' in athleteCat):
+            continue
+        elif not is_elite and ('Elite' in athleteCat or 'Pop' in athleteCat):
+            continue
+
+        # the first item is the overall position
         pos = athlete_parts[0].text
-        # the second is the number and the third the name
-        number = athlete_parts[1].text
-        athleteName = athlete_parts[2].text
-        athleteCat = athlete_parts[3].text
-        # the seventh is the category position and the ninth the time
-        categoryPos = athlete_parts[4].text
-        clubName = athlete_parts[5].text
-        timeStr = athlete_parts[7].text
-        if (pos == 'DESC'):
-            timeStr = 'Descalificado'
 
-        if debugCounter % 10 == 0:
-            print(pos + " " + number + " - " + athleteName + "( " + clubName + " ). Finished " + categoryPos + " in " + athleteCat + " with a time of " + timeStr)
-        debugCounter += 1
+        # the third item is the name and a flag for the nationality
+        athlete_name = athlete_parts[2].text
+
+        # the fourth is the club
+        club_name = athlete_parts[3].text
+
+        # the seventh is the position in the category
+        categoryPos = athlete_parts[6].text
+
+        # the eleventh item has the time
+        timeStr = athlete_parts[10].text
+
+        print(pos + " " + number + " - " + athlete_name + "( " + club_name + " ). Finished " + categoryPos + " in " + athleteCat + " with a time of " + timeStr)
 
         # fill the athlete data
         athlete = AthleteData()
         athlete.number = number
-        athlete.name = athleteName
-        athlete.club = clubName
+        athlete.name = athlete_name
+        athlete.club = club_name
         athlete.category = athleteCat
         athlete.posInCategory = categoryPos
         athlete.timeStr = timeStr
@@ -116,7 +107,7 @@ def ScrapeRaceResults(driver, url: str, elite_points, raceTitle: str, category: 
 
     # after having all the athletes let's compute their points
     numDisqualifiedAthletes = 0
-    if category_index == 0:
+    if is_elite:
         # for elite athletes we use the elite_points array but first we have to sort them (removing the disqualified ones)
         non_disqualified_athletes = []
         for athlete in athletes:
@@ -150,15 +141,15 @@ def ScrapeRaceResults(driver, url: str, elite_points, raceTitle: str, category: 
             else:
                 athlete.points = 0
 
-    print("Finished analizying athletes. A total of " + str(len(athletes)) + " athletes analyzed. " + str(numDisqualifiedAthletes) + " of them are disqualified and get no points")
+    print("Finished analizying athletes. A total of " + str(len(athletes)) + " athletes analyzed.")
 
     # return the list of athletes
     return athletes
 
 
-def ScrapeCrono4SportFullRace(driver, url: str, elite_points, eventName: str, excelFilePath: str):
+def ScrapeToptimeFullRace(driver: webdriver.Chrome, url: str, elite_points: list, eventName: str, excelFilePath: str):
 
-    print("Scraping results from crono4sports webpage")
+    print("Scraping results from dorsalchip webpage")
 
     # Create an Excel file
     workbook = Workbook()
