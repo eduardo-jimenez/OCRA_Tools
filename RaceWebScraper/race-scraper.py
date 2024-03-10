@@ -30,23 +30,30 @@ def scrapeFullRace(driver, url: str, elite_points, eventName: str, excelFilePath
 
 
 #  configure the scraping 
+print('Configuring scraping')
 #url = 'https://www.crono4sports.es/glive/g-live.html?f=/carreras/1806-torrevieja.clax'
-#url = 'https://www.dorsalchip.es/carrera/2024/2/25/VI_The_Last_Race_.aspx#'
-url = 'https://www.dorsalchip.es/carrera/2024/2/18/SKULL_RACE.aspx'
-raceFullName = 'Skull Race - Torremolinos - 2024'
+url = 'https://www.dorsalchip.es/carrera/2024/2/25/VI_The_Last_Race_.aspx#'
+raceFullName = 'The Last Race - Canillas de Aceituno - 2024'
+#url = 'https://www.dorsalchip.es/carrera/2024/2/18/SKULL_RACE.aspx'
+#raceFullName = 'Skull Race - Torremolinos - 2024'
 #url = 'https://www.crono4sports.es/clasificacion/1664/'
 #raceFullName = 'Medieval Xtreme Race - Polop - 2024'
 #url = 'https://www.crono4sports.es/clasificacion/1733/'
 #raceFullName = 'Lion Race - Navas del Rey - 2024'
-url = 'https://www.crono4sports.es/glive/g-live.html?f=/carreras/1699-llocnou.clax'
-raceFullName = 'Medieval Xtreme Race - Llocnou de San Jeromi - 2024'
-url = 'https://www.crono4sports.es/glive/g-live.html?f=/carreras/1684-kongrace.clax'
-raceFullName = 'Kong Race - Polinya - 2024'
+#url = 'https://www.crono4sports.es/glive/g-live.html?f=/carreras/1699-llocnou.clax'
+#raceFullName = 'Medieval Xtreme Race - Llocnou de San Jeromi - 2024'
+#url = 'https://www.crono4sports.es/glive/g-live.html?f=/carreras/1684-kongrace.clax'
+#raceFullName = 'Kong Race - Polinya - 2024'
+isOCRSeries = False
 
 # generate the file
 currFolder = os.getcwd()
+if isOCRSeries:
+    directory = '\\data\\OCRSeries\\'
+else:
+    directory = '\\data\\LigaOCRA\\'
 filename = raceFullName.replace(" ", "") + ".xlsx"
-filePath = currFolder + '\\data\\' + filename
+filePath = currFolder + directory + filename
 
 # create the Selenium web driver
 driver = webdriver.Chrome()
