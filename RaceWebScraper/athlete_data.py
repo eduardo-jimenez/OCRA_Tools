@@ -4,6 +4,7 @@ from openpyxl.styles import Font
 from openpyxl.worksheet.worksheet import Worksheet
 from datetime import timedelta
 
+
 # Converts a string with format '##:##:##' to the total seconds
 def timeStrToMSeconds(str: str) -> int:
     if (len(str) <= 1):
