@@ -1,7 +1,8 @@
 import datetime
 import os
 from openpyxl import Workbook, load_workbook
-from openpyxl.styles import Alignment, Font
+from openpyxl.styles import Alignment, Font, PatternFill
+from openpyxl.styles.borders import Border, Side, BORDER_THIN
 from openpyxl.worksheet.worksheet import Worksheet
 from typing import List
 from athlete_data import AthleteData
@@ -157,6 +158,7 @@ def analyze_all_races_in_folder(folder: str, athletes: List[LeagueAthlete], max_
     return races
 
 
+# writes the header of the sheet for a league
 def write_header_for_sheet(sheet: Worksheet, race_names: List[str], row_offset: int, isElite: bool):
     # write the headers
     sheet.cell(row_offset + 0, 1).value = "Info Atleta"
@@ -184,6 +186,15 @@ def write_header_for_sheet(sheet: Worksheet, race_names: List[str], row_offset: 
         sheet.merge_cells(start_row=row_offset, start_column=1, end_row=row_offset, end_column=6)
     else:
         sheet.merge_cells(start_row=row_offset, start_column=1, end_row=row_offset, end_column=8)
+    
+    for i in range(1, col_offset + 2 * len(race_names)):
+        race_col = i - col_offset
+        if race_col == -1 or (race_col > 0 and race_col % 2 == 1):
+            sheet.cell(row_offset + 0, i).border = Border(top=Side(border_style=BORDER_THIN), bottom=Side(border_style=BORDER_THIN), right=Side(border_style=BORDER_THIN))
+            sheet.cell(row_offset + 1, i).border = Border(bottom=Side(border_style=BORDER_THIN), right=Side(border_style=BORDER_THIN))
+        else:
+            sheet.cell(row_offset + 0, i).border = Border(top=Side(border_style=BORDER_THIN), bottom=Side(border_style=BORDER_THIN))
+            sheet.cell(row_offset + 1, i).border = Border(bottom=Side(border_style=BORDER_THIN))
 
     # set all the cells as bold
     bold_font = Font(bold=True)
@@ -191,9 +202,11 @@ def write_header_for_sheet(sheet: Worksheet, race_names: List[str], row_offset: 
     for cell in row:
         cell.font = bold_font
         cell.alignment = Alignment(wrap_text=True, horizontal='center', vertical='center')
+        cell.fill = PatternFill(start_color='CCCCCC', fill_type='solid')
     row = sheet[row_offset + 1]
     for cell in row:
         cell.font = bold_font
+        cell.fill = PatternFill(start_color='CCCCCC', fill_type='solid')
 
 
 # writes the given athlete at the given row in the given sheet with the info we have
@@ -209,8 +222,10 @@ def write_athlete_row(sheet: Worksheet, row: int, pos: int, athlete: LeagueAthle
 
     if isElite:
         col_offset = 7
+        sheet.cell(row, 6).border = Border(right=Side(border_style=BORDER_THIN))
     else:
         col_offset = 9
+        sheet.cell(row, 8).border = Border(right=Side(border_style=BORDER_THIN))
 
     # now write the results in the races
     for i in range(len(race_names)):
@@ -224,6 +239,9 @@ def write_athlete_row(sheet: Worksheet, row: int, pos: int, athlete: LeagueAthle
             else:
                 sheet.cell(row, col_offset + 2 * i + 0).value = race_results.timeInRace
             sheet.cell(row, col_offset + 2 * i + 1).value = race_results.pointsInRace
+        
+        # in any case format the cell
+        sheet.cell(row, col_offset + 2 * i + 1).border = Border(right=Side(border_style=BORDER_THIN))
 
 
 # fill all the athletes of a given category in a worksheet
@@ -280,21 +298,21 @@ def generate_excel_league(athletes: List[LeagueAthlete], race_names: List[str], 
 
 
 # set the folder name
-analyzeLigaOCRA = True
+league_name = 'LigaOCRA'
+#league_name = 'OCRSeries'
+analyzeLigaOCRA = (league_name == 'LigaOCRA')
 if analyzeLigaOCRA:
     files_folder = 'data\\LigaOCRA'
+    max_races_for_points = 8
 else:
     files_folder = 'data\\OCRSeries'
+    max_races_for_points = 6
 
 # create a full path for the folder
 currFolder = os.getcwd()
 path = os.path.join(currFolder, files_folder)
 
 # analyze all the files inside
-if analyzeLigaOCRA:
-    max_races_for_points = 8
-else:
-    max_races_for_points = 6
 athletes: List[AthleteData] = []
 race_names = analyze_all_races_in_folder(path, athletes, max_races_for_points)
 
