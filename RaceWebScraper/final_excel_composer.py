@@ -19,17 +19,93 @@ class LeagueAthlete:
     def __init__(self):
         self.number = -1
         self.name = ""
+        self.date_of_birth = None
+        self.age_group = ""
         self.club = ""
         self.category = ""
         self.races_considered = 0
         self.points = 0
         self.races: List[AthleteRaceInfo] = []
 
+    def calculate_age_group(self):
+        # calculate how many years old the athlete will be on 2024
+        year_of_birth = self.date_of_birth.year
+        years_old = 2024 - year_of_birth
+        if years_old < 20:
+            self.age_group = 'U20'
+        elif years_old < 25:
+            self.age_group = '20-24'
+        elif years_old < 30:
+            self.age_group = '25-29'
+        elif years_old < 35:
+            self.age_group = '30-34'
+        elif years_old < 40:
+            self.age_group = '35-39'
+        elif years_old < 45:
+            self.age_group = '40-44'
+        elif years_old < 50:
+            self.age_group = '45-49'
+        elif years_old < 55:
+            self.age_group = '50-54'
+        elif years_old < 60:
+            self.age_group = '55-59'
+        else:
+            self.age_group = '60+'
+
+
 def sort_league_athlete(athlete: LeagueAthlete):
     return athlete.points
 
 def sort_race_info(race_info: AthleteRaceInfo):
     return race_info.pointsInRace
+
+
+# Loads all OCRA athletes from the right excel file
+def load_all_OCRA_athletes(path: str):
+
+    athletes: List[LeagueAthlete] = []
+
+    # load the excel file
+    workbook = load_workbook(path)
+    sheet: Worksheet = workbook.active
+
+    # the first row is the header, the rest are the athletes
+    for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row, values_only=True):
+
+        # ignore clubs
+        if (row[1].lower() == 'club'):
+            continue
+
+        # first column is the name
+        athlete_name = row[0]
+        # third column is the number
+        athlete_number = row[2]
+        # fourth is the date of birth
+        athlete_date_of_birth = row[3]
+
+        # ensure all parameters are valid
+        if (athlete_number == None or athlete_number == "" or
+            athlete_date_of_birth == None or athlete_date_of_birth == ""):
+            continue
+
+        # create an athlete
+        athlete = LeagueAthlete()
+        athlete.name = athlete_name
+        athlete.number = int(athlete_number)
+        if athlete_date_of_birth is str:
+            athlete.date_of_birth = datetime.datetime.strptime(athlete_date_of_birth, '%y/%m/%d')
+        else:
+            athlete.date_of_birth = athlete_date_of_birth
+        athlete.calculate_age_group()
+
+        # add it to the list
+        athletes.append(athlete)
+
+        #print(f'New Athlete: {athlete.name} ({athlete.number}) - {athlete.date_of_birth}')
+
+    print(f'A total of {len(athletes)} athletes have been read from {path}')
+
+    return athletes
 
 
 # Analyzes an excel sheet with the results of a race for a cateogry and returns the list of athletes analyzed
@@ -93,18 +169,17 @@ def add_race_resutls_athletes(race_athletes: List[AthleteData], athletes: List[L
         race_info.pointsInRace = athlete_info.points
 
         # try to find the athlete in the athletes list
-        athlete_data = next((x for x in athletes if x.number == athlete_info.number), None)
+        athlete_number = int(athlete_info.number)
+        athlete_data = next((x for x in athletes if x.number == athlete_number), None)
 
+        # we're reading the list of valid athletes before, so if we can't find him he's not part of OCRA España
         if athlete_data == None:
-            # create the athlete data
-            athlete_data = LeagueAthlete()
-            athlete_data.number = athlete_info.number
-            athlete_data.name = athlete_info.name
+            continue
+
+        if athlete_data.club == "":
+            # add some data we didn't get from the original excel file
             athlete_data.club = athlete_info.club
             athlete_data.category = athlete_info.category
-
-            # add it to the list
-            athletes.append(athlete_data)
 
         # append the race to the athlete data
         athlete_data.races.append(race_info)
@@ -210,7 +285,7 @@ def write_header_for_sheet(sheet: Worksheet, race_names: List[str], row_offset: 
 
 
 # writes the given athlete at the given row in the given sheet with the info we have
-def write_athlete_row(sheet: Worksheet, row: int, pos: int, athlete: LeagueAthlete, race_names: List[str], isElite: bool):
+def write_athlete_row(sheet: Worksheet, row: int, pos: int, athlete: LeagueAthlete, race_names: List[str], isElite: bool, age_group_pos: {}):
     
     # write the info of the athlete
     sheet.cell(row, 1).value = pos
@@ -225,6 +300,9 @@ def write_athlete_row(sheet: Worksheet, row: int, pos: int, athlete: LeagueAthle
         sheet.cell(row, 6).border = Border(right=Side(border_style=BORDER_THIN))
     else:
         col_offset = 9
+        sheet.cell(row, 7).value = athlete.age_group
+        if athlete.points > 0:
+            sheet.cell(row, 8).value = age_group_pos[athlete.age_group]
         sheet.cell(row, 8).border = Border(right=Side(border_style=BORDER_THIN))
 
     # now write the results in the races
@@ -260,12 +338,29 @@ def fill_league_sheet(sheet: Worksheet, athletes: List[LeagueAthlete], race_name
     isElite = 'Elite' in category_str
     write_header_for_sheet(sheet, race_names, 1, isElite)
 
+    # in age group we're going to keep track of the current position in each age group
+    age_group_pos = {}
+    age_group_pos['U20'] = 0
+    age_group_pos['20-24'] = 0
+    age_group_pos['25-29'] = 0
+    age_group_pos['30-34'] = 0
+    age_group_pos['35-39'] = 0
+    age_group_pos['40-44'] = 0
+    age_group_pos['45-49'] = 0
+    age_group_pos['50-54'] = 0
+    age_group_pos['55-59'] = 0
+    age_group_pos['60+'] = 0
+
     # now iterate over all the athletes
     for i in range(0, len(category_athletes)):
         athlete: LeagueAthlete = category_athletes[i]
 
+        # update the athlete age group
+        if not isElite:
+            age_group_pos[athlete.age_group] += 1
+
         # add a row for this athlete
-        write_athlete_row(sheet, 3 + i, i, athlete, race_names, isElite)
+        write_athlete_row(sheet, 3 + i, i, athlete, race_names, isElite, age_group_pos)
 
 
 # generates the final excel file with all athletes in the league
@@ -312,8 +407,11 @@ else:
 currFolder = os.getcwd()
 path = os.path.join(currFolder, files_folder)
 
+# load all OCRA athletes
+all_athletes_path = os.path.join(currFolder, 'data\\atletas_OCRA.xlsx')
+athletes: List[AthleteData] = load_all_OCRA_athletes(all_athletes_path)
+
 # analyze all the files inside
-athletes: List[AthleteData] = []
 race_names = analyze_all_races_in_folder(path, athletes, max_races_for_points)
 
 # compose the final path of the final file
