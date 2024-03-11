@@ -360,7 +360,7 @@ def fill_league_sheet(sheet: Worksheet, athletes: List[LeagueAthlete], race_name
             age_group_pos[athlete.age_group] += 1
 
         # add a row for this athlete
-        write_athlete_row(sheet, 3 + i, i, athlete, race_names, isElite, age_group_pos)
+        write_athlete_row(sheet, 3 + i, i + 1, athlete, race_names, isElite, age_group_pos)
 
 
 # generates the final excel file with all athletes in the league
