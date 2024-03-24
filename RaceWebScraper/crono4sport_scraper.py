@@ -8,7 +8,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support.ui import Select
 from openpyxl import Workbook, load_workbook
 from copy import copy
-from scraper_common import copy_cells, AthleteSorting
+from scraper_common import copy_cells, AthleteSorting, CalculateAGAthletePoints
 import requests
 import time
 import os
@@ -146,7 +146,7 @@ def ScrapeRaceResults(driver, url: str, elite_points, raceTitle: str, category: 
         # now let's calculate the points of each athlete
         for athlete in athletes:
             if athlete.timeSecs > 0:
-                athlete.points = round(100.0 * minTime / athlete.timeSecs, 1)
+                athlete.points = CalculateAGAthletePoints(athlete.timeSecs, minTime)
             else:
                 athlete.points = 0
 

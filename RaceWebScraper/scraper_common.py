@@ -58,3 +58,6 @@ def copy_cells(source_sheet, target_sheet):
 # Sorting function for athletes
 def AthleteSorting(athlete: AthleteData):
     return athlete.timeSecs
+
+def CalculateAGAthletePoints(athleteTime: float, minTime: float):
+    return round(100.0 * minTime / athleteTime, 3)

@@ -73,15 +73,29 @@ def load_all_OCRA_athletes(path: str):
     for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row, values_only=True):
 
         # ignore clubs
-        if (row[1].lower() == 'club'):
+        category_str = row[5].lower()
+        if not ('atleta' in category_str):
             continue
 
-        # first column is the name
-        athlete_name = row[0]
-        # third column is the number
-        athlete_number = row[2]
+        # first column is the number
+        athlete_number = row[0]
+        # second column is the name
+        athlete_name = row[1]
+        # third column is the club
+        athlete_club = row[2]
         # fourth is the date of birth
         athlete_date_of_birth = row[3]
+        # fifth category is the sex and the seventh whether they are elite or not
+        athlete_sex = row[4]
+        is_elite = (row[6] != None and row[6] != '')
+        if (is_elite):
+            athlete_category = 'Elite'
+        else:
+            athlete_category = 'GGEE'
+        if (athlete_sex == 'Mujer'):
+            athlete_category = athlete_category + '_Fem'
+        else:
+            athlete_category = athlete_category + '_Masc'
 
         # ensure all parameters are valid
         if (athlete_number == None or athlete_number == "" or
@@ -90,8 +104,10 @@ def load_all_OCRA_athletes(path: str):
 
         # create an athlete
         athlete = LeagueAthlete()
+        athlete.club = athlete_club
         athlete.name = athlete_name
         athlete.number = int(athlete_number)
+        athlete.category = athlete_category
         if athlete_date_of_birth is str:
             athlete.date_of_birth = datetime.datetime.strptime(athlete_date_of_birth, '%y/%m/%d')
         else:
@@ -116,6 +132,9 @@ def analyze_race_category_sheet(sheet: Worksheet):
     category_athletes: List[AthleteData] = []
     # iterate over the rows of the sheet, ignoring the first one which is the title
     for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row, values_only=True):
+        if (row[0] == None):
+            continue
+        
         athlete = AthleteData()
         athlete.number = row[0]
         athlete.name = row[1]
@@ -176,10 +195,13 @@ def add_race_resutls_athletes(race_athletes: List[AthleteData], athletes: List[L
         if athlete_data == None:
             continue
 
+        # if the category is not the right one we skip the athlete too (if it's an elite competing in age group we are not going to consider its results)
+        if athlete_data.category != athlete_info.category:
+            continue
+
         if athlete_data.club == "":
             # add some data we didn't get from the original excel file
             athlete_data.club = athlete_info.club
-            athlete_data.category = athlete_info.category
 
         # append the race to the athlete data
         athlete_data.races.append(race_info)
@@ -253,7 +275,10 @@ def write_header_for_sheet(sheet: Worksheet, race_names: List[str], row_offset: 
     for i in range(0, len(race_names)):
         col_index = col_offset + 2 * i
         sheet.cell(row_offset + 0, col_index).value = race_names[i]
-        sheet.cell(row_offset + 1, col_index + 0).value = "Tiempo"
+        if isElite:
+            sheet.cell(row_offset + 1, col_index + 0).value = "Posición"
+        else:
+            sheet.cell(row_offset + 1, col_index + 0).value = "Tiempo"
         sheet.cell(row_offset + 1, col_index + 1).value = "Puntos"
         sheet.merge_cells(start_row=row_offset, start_column=col_index , end_row=row_offset, end_column=col_index + 1)
 
@@ -290,6 +315,7 @@ def write_athlete_row(sheet: Worksheet, row: int, pos: int, athlete: LeagueAthle
     # write the info of the athlete
     sheet.cell(row, 1).value = pos
     sheet.cell(row, 2).value = athlete.points
+    sheet.cell(row, 2).number_format = '#.#'
     sheet.cell(row, 3).value = athlete.races_considered
     sheet.cell(row, 4).value = athlete.number
     sheet.cell(row, 5).value = athlete.name
@@ -317,6 +343,7 @@ def write_athlete_row(sheet: Worksheet, row: int, pos: int, athlete: LeagueAthle
             else:
                 sheet.cell(row, col_offset + 2 * i + 0).value = race_results.timeInRace
             sheet.cell(row, col_offset + 2 * i + 1).value = race_results.pointsInRace
+            sheet.cell(row, col_offset + 2 * i + 1).number_format = '#.#'
         
         # in any case format the cell
         sheet.cell(row, col_offset + 2 * i + 1).border = Border(right=Side(border_style=BORDER_THIN))

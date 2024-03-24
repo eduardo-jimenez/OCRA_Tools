@@ -39,10 +39,10 @@ isOCRSeries = False
 #url = 'https://www.crono4sports.es/clasificacion/1664/'
 #raceFullName = 'Medieval Xtreme Race - Polop - 2024'
 #raceNum = 2
-#url = 'https://www.crono4sports.es/glive/g-live.html?f=/carreras/1806-torrevieja.clax'
-#raceFullName = 'Unbroken - Torrevieja - 2024'
-#raceNum = 1
-#isOCRSeries = True
+url = 'https://www.crono4sports.es/glive/g-live.html?f=/carreras/1806-torrevieja.clax'
+raceFullName = 'Unbroken - Torrevieja - 2024'
+raceNum = 1
+isOCRSeries = True
 #url = 'https://www.dorsalchip.es/carrera/2024/2/18/SKULL_RACE.aspx'
 #raceFullName = 'Skull Race - Torremolinos - 2024'
 #raceNum = 3
@@ -56,9 +56,9 @@ isOCRSeries = False
 #url = 'https://www.crono4sports.es/glive/g-live.html?f=/carreras/1699-llocnou.clax'
 #raceFullName = 'Medieval Xtreme Race - Llocnou de San Jeromi - 2024'
 #raceNum = 6
-url = 'https://www.crono4sports.es/glive/g-live.html?f=/carreras/1684-kongrace.clax'
-raceFullName = 'Kong Race - Polinya - 2024'
-raceNum = 7
+#url = 'https://www.crono4sports.es/glive/g-live.html?f=/carreras/1684-kongrace.clax'
+#raceFullName = 'Kong Race - Polinya - 2024'
+#raceNum = 7
 
 # generate the file
 currFolder = os.getcwd()

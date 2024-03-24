@@ -92,6 +92,7 @@ class AthleteData:
             sheet.cell(row, 6).value = self.timeStr
         sheet.cell(row, 7).value = self.points
         sheet.cell(row, 6).number_format = "[HH]:MM:SS.000"
+        sheet.cell(row, 7).number_format = "#.#"
 
 
 # Writes a file with the info of all the athletes in the given list
